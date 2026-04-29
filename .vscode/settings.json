@@ -1,6 +1,0 @@
-{
-    "python.defaultInterpreterPath": "./venv/bin/python3",
-    "python.analysis.extraPaths": [
-        "/home/aprel/network-queue-sim"
-    ]
-}
