@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network Queue Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:        #050c14;
+    --bg2:       #0a1628;
+    --bg3:       #0f2040;
+    --teal:      #00d4c8;
+    --teal2:     #007a72;
+    --gold:      #f5a623;
+    --red:       #ff4d6d;
+    --green:     #39d98a;
+    --muted:     #4a7090;
+    --text:      #c8e6f0;
+    --dim:       #3a5a70;
+    --white:     #f0f8ff;
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-head: 'Syne', sans-serif;
+    --radius:    6px;
+    --glow:      0 0 20px rgba(0,212,200,0.15);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Grid background ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,200,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,200,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Header ── */
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 24px 32px 20px;
+    border-bottom: 1px solid var(--dim);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(180deg, rgba(0,212,200,0.06) 0%, transparent 100%);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo-icon {
+    width: 40px; height: 40px;
+    border: 2px solid var(--teal);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    box-shadow: var(--glow);
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 10px rgba(0,212,200,0.2); }
+    50%      { box-shadow: 0 0 25px rgba(0,212,200,0.5); }
+  }
+
+  .logo-text h1 {
+    font-family: var(--font-head);
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -0.5px;
+  }
+
+  .logo-text p {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  .header-badges {
+    display: flex;
+    gap: 8px;
+  }
+
+  .badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border: 1px solid;
+  }
+
+  .badge-teal  { color: var(--teal);  border-color: var(--teal2);  background: rgba(0,212,200,0.08); }
+  .badge-gold  { color: var(--gold);  border-color: rgba(245,166,35,0.4); background: rgba(245,166,35,0.08); }
+  .badge-green { color: var(--green); border-color: rgba(57,217,138,0.4); background: rgba(57,217,138,0.08); }
+
+  /* ── Layout ── */
+  .layout {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 0;
+    height: calc(100vh - 81px);
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    border-right: 1px solid var(--dim);
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background: rgba(10,22,40,0.6);
+  }
+
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 2px; }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* ── Scenario cards ── */
+  .scenario-card {
+    padding: 12px 14px;
+    border: 1px solid var(--dim);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--bg2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .scenario-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--teal);
+    transform: scaleY(0);
+    transition: transform 0.2s ease;
+  }
+
+  .scenario-card:hover,
+  .scenario-card.active {
+    border-color: var(--teal2);
+    background: var(--bg3);
+    box-shadow: var(--glow);
+  }
+
+  .scenario-card:hover::before,
+  .scenario-card.active::before { transform: scaleY(1); }
+
+  .sc-name {
+    font-family: var(--font-head);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 3px;
+  }
+
+  .sc-desc {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .sc-params {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .sc-tag {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: rgba(0,212,200,0.1);
+    color: var(--teal);
+    border: 1px solid rgba(0,212,200,0.2);
+  }
+
+  .sc-rho {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-weight: 700;
+  }
+
+  /* ── Custom params form ── */
+  .custom-form {
+    background: var(--bg2);
+    border: 1px solid var(--dim);
+    border-radius: var(--radius);
+    padding: 14px;
+  }
+
+  .form-row {
+    margin-bottom: 12px;
+  }
+
+  .form-row label {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+  }
+
+  .form-row input, .form-row select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--dim);
+    border-radius: 4px;
+    padding: 7px 10px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-row input:focus, .form-row select:focus {
+    border-color: var(--teal);
+    box-shadow: 0 0 0 2px rgba(0,212,200,0.1);
+  }
+
+  .form-row select option { background: var(--bg2); }
+
+  .btn {
+    width: 100%;
+    padding: 9px 16px;
+    border: none;
+    border-radius: var(--radius);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+  }
+
+  .btn-primary {
+    background: var(--teal);
+    color: var(--bg);
+  }
+  .btn-primary:hover { background: #00f5e8; box-shadow: 0 0 20px rgba(0,212,200,0.4); }
+
+  .btn-sim {
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid rgba(245,166,35,0.5);
+    margin-top: 8px;
+  }
+  .btn-sim:hover { background: rgba(245,166,35,0.1); box-shadow: 0 0 15px rgba(245,166,35,0.2); }
+
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── Main panel ── */
+  .main {
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .main::-webkit-scrollbar { width: 4px; }
+  .main::-webkit-scrollbar-track { background: transparent; }
+  .main::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 2px; }
+
+  /* ── Metrics row ── */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+  }
+
+  .metric-card {
+    background: var(--bg2);
+    border: 1px solid var(--dim);
+    border-radius: var(--radius);
+    padding: 14px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .metric-card.highlight {
+    border-color: var(--teal2);
+    background: var(--bg3);
+  }
+
+  .metric-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--teal);
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
+  }
+
+  .metric-card.highlight::after { transform: scaleX(1); }
+
+  .metric-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .metric-value {
+    font-family: var(--font-head);
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--white);
+    line-height: 1;
+    margin-bottom: 4px;
+    transition: color 0.3s;
+  }
+
+  .metric-unit {
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* ── Rho bar ── */
+  .rho-bar-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--dim);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+  }
+
+  .rho-bar-track {
+    height: 8px;
+    background: var(--bg3);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 10px 0 6px;
+  }
+
+  .rho-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1),
+                background 0.4s ease;
+  }
+
+  .rho-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--dim);
+  }
+
+  /* ── Charts grid ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .chart-card {
+    background: var(--bg2);
+    border: 1px solid var(--dim);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+
+  .chart-title {
+    font-family: var(--font-head);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 4px;
+  }
+
+  .chart-sub {
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .chart-wrap {
+    position: relative;
+    height: 200px;
+  }
+
+  /* ── NS3 comparison ── */
+  .comparison-table {
+    background: var(--bg2);
+    border: 1px solid var(--dim);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .comparison-table table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .comparison-table th {
+    background: var(--bg3);
+    padding: 10px 16px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: left;
+    border-bottom: 1px solid var(--dim);
+  }
+
+  .comparison-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(74,112,144,0.2);
+    font-size: 12px;
+  }
+
+  .comparison-table tr:last-child td { border-bottom: none; }
+
+  .comparison-table td:nth-child(2) { color: var(--teal); }
+  .comparison-table td:nth-child(3) { color: var(--gold); }
+
+  .diff-good   { color: var(--green) !important; font-weight: 700; }
+  .diff-medium { color: var(--gold)  !important; font-weight: 700; }
+  .diff-poor   { color: var(--red)   !important; font-weight: 700; }
+
+  /* ── NS3 section header ── */
+  .ns3-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--dim);
+  }
+
+  .ns3-title {
+    font-family: var(--font-head);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  .ns3-verdict {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  .verdict-excellent { background: rgba(57,217,138,0.15); color: var(--green); border: 1px solid rgba(57,217,138,0.3); }
+  .verdict-good      { background: rgba(245,166,35,0.15);  color: var(--gold);  border: 1px solid rgba(245,166,35,0.3); }
+  .verdict-fair      { background: rgba(255,77,109,0.15);  color: var(--red);   border: 1px solid rgba(255,77,109,0.3); }
+
+  /* ── Loading spinner ── */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid var(--dim);
+    border-top-color: var(--teal);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-bar {
+    height: 2px;
+    background: linear-gradient(90deg, var(--teal), var(--gold), var(--teal));
+    background-size: 200%;
+    border-radius: 1px;
+    animation: shimmer 1.5s linear infinite;
+    margin-bottom: 12px;
+  }
+  @keyframes shimmer { to { background-position: 200%; } }
+
+  /* ── Empty state ── */
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--dim);
+    text-align: center;
+    padding: 40px;
+  }
+
+  .empty-state .icon { font-size: 48px; opacity: 0.3; }
+  .empty-state h3 { font-family: var(--font-head); font-size: 18px; color: var(--muted); }
+  .empty-state p { font-size: 12px; line-height: 1.6; max-width: 300px; }
+
+  /* ── Alert ── */
+  .alert {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    border: 1px solid;
+  }
+  .alert-error { background: rgba(255,77,109,0.1); border-color: rgba(255,77,109,0.3); color: #ff8fa3; }
+  .alert-info  { background: rgba(0,212,200,0.08); border-color: rgba(0,212,200,0.2);  color: var(--teal); }
+
+  /* ── NS3 status ── */
+  #ns3-status { display: none; }
+  #comparison-section { display: none; }
+
+  /* ── Topology diagram ── */
+  .topology {
+    background: var(--bg2);
+    border: 1px solid var(--dim);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+
+  .topo-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 10px 0;
+    flex-wrap: wrap;
+  }
+
+  .topo-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .topo-box {
+    width: 60px; height: 40px;
+    border: 1.5px solid;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    transition: all 0.3s;
+  }
+
+  .topo-box.sender   { border-color: var(--teal2);  background: rgba(0,212,200,0.08); }
+  .topo-box.router   { border-color: var(--gold);   background: rgba(245,166,35,0.08); }
+  .topo-box.receiver { border-color: var(--green);  background: rgba(57,217,138,0.08); }
+
+  .topo-label {
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+  }
+
+  .topo-label span {
+    display: block;
+    font-size: 10px;
+    color: var(--text);
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .topo-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .topo-line {
+    width: 60px; height: 2px;
+    background: linear-gradient(90deg, var(--teal2), var(--teal));
+    position: relative;
+    overflow: hidden;
+  }
+
+  .topo-line::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -20px; width: 20px; height: 2px;
+    background: var(--white);
+    animation: packet-flow 1.5s linear infinite;
+  }
+
+  @keyframes packet-flow { to { left: 80px; } }
+
+  .topo-bw {
+    font-size: 9px;
+    color: var(--teal);
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🌐</div>
+    <div class="logo-text">
+      <h1>Network Queue Simulator</h1>
+      <p>Poisson arrivals · M/M/1 · M/M/K · NS3 Verification</p>
+    </div>
+  </div>
+  <div class="header-badges">
+    <span class="badge badge-teal">M/M/1</span>
+    <span class="badge badge-teal">M/M/K</span>
+    <span class="badge badge-gold">P-K Formula</span>
+    <span class="badge badge-green">NS3 Verified</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+
+    <div>
+      <div class="section-label">Preset Scenarios</div>
+      <div id="scenario-list" style="display:flex;flex-direction:column;gap:8px;">
+        <div style="color:var(--dim);font-size:11px;">Loading scenarios…</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Custom Parameters</div>
+      <div class="custom-form">
+        <div class="form-row">
+          <label>λ — Arrival Rate (pkt/s)</label>
+          <input type="number" id="f-lam" value="100" min="1" max="10000" step="1">
+        </div>
+        <div class="form-row">
+          <label>Bandwidth (Mbps)</label>
+          <input type="number" id="f-bw" value="1.2" min="0.1" max="1000" step="0.1">
+        </div>
+        <div class="form-row">
+          <label>K — Parallel Links (Servers)</label>
+          <input type="number" id="f-k" value="1" min="1" max="20" step="1">
+        </div>
+        <button class="btn btn-primary" onclick="runAnalytical()">
+          ▶ Analyse
+        </button>
+        <button class="btn btn-sim" id="btn-sim" onclick="runNS3()">
+          ⚡ Run NS3 Simulation
+        </button>
+        <div class="form-row" style="margin-top:10px;margin-bottom:0;">
+          <label>NS3 Simulation Time (s)</label>
+          <select id="f-simtime">
+            <option value="5">5 seconds (fast)</option>
+            <option value="10" selected>10 seconds (default)</option>
+            <option value="30">30 seconds (accurate)</option>
+            <option value="60">60 seconds (high accuracy)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Topology diagram -->
+    <div>
+      <div class="section-label">Network Topology</div>
+      <div class="topology">
+        <div class="topo-inner">
+          <div class="topo-node">
+            <div class="topo-box sender">💻</div>
+            <div class="topo-label">Sender<span id="topo-lam">λ pkt/s</span></div>
+          </div>
+          <div class="topo-link">
+            <div class="topo-line"></div>
+            <div class="topo-bw">100 Mbps</div>
+          </div>
+          <div class="topo-node">
+            <div class="topo-box router">🔀</div>
+            <div class="topo-label">Router<span id="topo-router">M/M/K Queue</span></div>
+          </div>
+          <div class="topo-link">
+            <div class="topo-line"></div>
+            <div class="topo-bw" id="topo-bw">? Mbps</div>
+          </div>
+          <div class="topo-node">
+            <div class="topo-box receiver">🖥</div>
+            <div class="topo-label">Receiver<span>Sink</span></div>
+          </div>
+        </div>
+        <div style="text-align:center;font-size:10px;color:var(--dim);margin-top:4px;">
+          Bottleneck link ↑ is the M/M/K queue
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ── MAIN PANEL ── -->
+  <main class="main" id="main-panel">
+
+    <div class="empty-state" id="empty-state">
+      <div class="icon">📡</div>
+      <h3>Select a scenario or enter custom parameters</h3>
+      <p>The simulator will compute analytical queuing metrics and optionally verify with NS3 discrete-event simulation.</p>
+    </div>
+
+    <!-- Results section (hidden until first run) -->
+    <div id="results-section" style="display:none;">
+
+      <!-- Status bar -->
+      <div id="ns3-status" class="loading-bar"></div>
+
+      <!-- Metrics row -->
+      <div class="metrics-grid">
+        <div class="metric-card" id="mc-rho">
+          <div class="metric-label">ρ — Utilisation</div>
+          <div class="metric-value" id="mv-rho">—</div>
+          <div class="metric-unit">fraction of capacity used</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Lq — Buffer Occupancy</div>
+          <div class="metric-value" id="mv-lq">—</div>
+          <div class="metric-unit">avg packets waiting</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Wq — Queuing Delay</div>
+          <div class="metric-value" id="mv-wq">—</div>
+          <div class="metric-unit">milliseconds avg wait</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">W — Total Delay</div>
+          <div class="metric-value" id="mv-w">—</div>
+          <div class="metric-unit">ms queue + transmission</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">P₀ — Idle Time</div>
+          <div class="metric-value" id="mv-p0">—</div>
+          <div class="metric-unit">% time router is free</div>
+        </div>
+      </div>
+
+      <!-- Rho bar -->
+      <div class="rho-bar-wrap">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:12px;font-weight:600;color:var(--white);">Link Utilisation  ρ = <span id="rho-text">—</span></span>
+          <span id="rho-status" class="badge" style="font-size:11px;">—</span>
+        </div>
+        <div class="rho-bar-track">
+          <div class="rho-bar-fill" id="rho-fill" style="width:0%;background:var(--green);"></div>
+        </div>
+        <div class="rho-labels">
+          <span>0% — Idle</span>
+          <span>▲ 70% Warning</span>
+          <span>▲ 85% Critical</span>
+          <span>100% — Collapse</span>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title">Queue Length vs Utilisation (ρ)</div>
+          <div class="chart-sub">M/M/K — Lq explodes as ρ → 1  (fixed bandwidth, varying λ)</div>
+          <div class="chart-wrap"><canvas id="chart-lq"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Queuing Delay vs Utilisation (ρ)</div>
+          <div class="chart-sub">Wq in milliseconds — non-linear growth near capacity</div>
+          <div class="chart-wrap"><canvas id="chart-wq"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Bar chart: scenario comparison -->
+      <div class="chart-card">
+        <div class="chart-title">Scenario Comparison — Queuing Delay (Wq)</div>
+        <div class="chart-sub">All preset scenarios side by side — analytical results</div>
+        <div class="chart-wrap" style="height:160px;"><canvas id="chart-compare"></canvas></div>
+      </div>
+
+      <!-- NS3 Comparison Table -->
+      <div id="comparison-section" class="comparison-table">
+        <div class="ns3-header">
+          <div class="ns3-title">⚡ NS3 Simulation vs Analytical — Verification</div>
+          <div id="ns3-verdict" class="ns3-verdict verdict-excellent">—</div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Analytical (M/M/K Formula)</th>
+              <th>NS3 Simulation</th>
+              <th>Accuracy</th>
+            </tr>
+          </thead>
+          <tbody id="comparison-body"></tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// Chart.js global defaults
+// ─────────────────────────────────────────────────────────────────────────────
+Chart.defaults.color          = '#4a7090';
+Chart.defaults.borderColor    = 'rgba(74,112,144,0.25)';
+Chart.defaults.font.family    = "'JetBrains Mono', monospace";
+Chart.defaults.font.size      = 11;
+
+const TEAL  = '#00d4c8';
+const GOLD  = '#f5a623';
+const RED   = '#ff4d6d';
+const GREEN = '#39d98a';
+const DIM   = 'rgba(74,112,144,0.3)';
+
+let chartLq      = null;
+let chartWq      = null;
+let chartCompare = null;
+let currentParams = null;
+let scenarioData  = {};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Boot — load scenarios
+// ─────────────────────────────────────────────────────────────────────────────
+async function boot() {
+  try {
+    const r = await fetch('/api/scenarios');
+    scenarioData = await r.json();
+    renderScenarioList();
+    renderCompareChart();
+  } catch(e) {
+    document.getElementById('scenario-list').innerHTML =
+      `<div class="alert alert-error">Cannot reach server — is Flask running?</div>`;
+  }
+}
+
+function renderScenarioList() {
+  const list = document.getElementById('scenario-list');
+  list.innerHTML = '';
+  for (const [key, sc] of Object.entries(scenarioData)) {
+    const ana = sc.analytical;
+    const rho = ana.rho || 0;
+    const rhoColor = rho < 0.7 ? GREEN : rho < 0.85 ? GOLD : RED;
+    const div = document.createElement('div');
+    div.className = 'scenario-card';
+    div.dataset.key = key;
+    div.innerHTML = `
+      <div class="sc-name">${sc.label}</div>
+      <div class="sc-desc">${sc.desc}</div>
+      <div class="sc-params">
+        <span class="sc-tag">λ=${sc.lam}</span>
+        <span class="sc-tag">${sc.bw_mbps}Mbps</span>
+        <span class="sc-tag">K=${sc.k}</span>
+        <span class="sc-rho" style="background:${rhoColor}22;color:${rhoColor};border:1px solid ${rhoColor}44;">
+          ρ=${(rho*100).toFixed(1)}%
+        </span>
+      </div>`;
+    div.onclick = () => loadScenario(key, div);
+    list.appendChild(div);
+  }
+}
+
+function loadScenario(key, el) {
+  document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  const sc = scenarioData[key];
+  document.getElementById('f-lam').value = sc.lam;
+  document.getElementById('f-bw').value  = sc.bw_mbps;
+  document.getElementById('f-k').value   = sc.k;
+  displayResults(sc.analytical, null);
+  loadSweepChart(sc.bw_mbps, sc.k);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Analytical run
+// ─────────────────────────────────────────────────────────────────────────────
+async function runAnalytical() {
+  const lam     = parseFloat(document.getElementById('f-lam').value);
+  const bw_mbps = parseFloat(document.getElementById('f-bw').value);
+  const k       = parseInt(document.getElementById('f-k').value);
+
+  document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+
+  try {
+    const r    = await fetch('/api/analyse', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({lam, bw_mbps, k})
+    });
+    const data = await r.json();
+    displayResults(data.analytical, null);
+    if (data.sweep) renderSweepCharts(data.sweep, data.analytical.rho);
+    currentParams = {lam, bw_mbps, k};
+    updateTopology(lam, bw_mbps, k);
+  } catch(e) {
+    showError('Analytical computation failed: ' + e.message);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NS3 simulation run
+// ─────────────────────────────────────────────────────────────────────────────
+async function runNS3() {
+  const lam      = parseFloat(document.getElementById('f-lam').value);
+  const bw_mbps  = parseFloat(document.getElementById('f-bw').value);
+  const k        = parseInt(document.getElementById('f-k').value);
+  const sim_time = parseInt(document.getElementById('f-simtime').value);
+  const btn      = document.getElementById('btn-sim');
+
+  btn.disabled   = true;
+  btn.innerHTML  = '<span class="spinner"></span> Running NS3…';
+
+  const statusBar = document.getElementById('ns3-status');
+  statusBar.style.display = 'block';
+
+  try {
+    const r    = await fetch('/api/simulate', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({lam, bw_mbps, k, sim_time})
+    });
+    const data = await r.json();
+    displayResults(data.analytical, data.ns3);
+    if (data.comparison) showNS3Comparison(data.analytical, data.ns3, data.comparison);
+  } catch(e) {
+    showError('NS3 simulation failed: ' + e.message);
+  } finally {
+    btn.disabled  = false;
+    btn.innerHTML = '⚡ Run NS3 Simulation';
+    statusBar.style.display = 'none';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Display results
+// ─────────────────────────────────────────────────────────────────────────────
+function displayResults(ana, ns3) {
+  document.getElementById('empty-state').style.display    = 'none';
+  document.getElementById('results-section').style.display = 'flex';
+  document.getElementById('results-section').style.flexDirection = 'column';
+  document.getElementById('results-section').style.gap = '20px';
+
+  if (ana.error) {
+    showError(ana.error);
+    return;
+  }
+
+  // Metrics
+  const rho = ana.rho;
+  animateValue('mv-rho', (rho * 100).toFixed(1) + '%');
+  animateValue('mv-lq',  ana.Lq.toFixed(2));
+  animateValue('mv-wq',  ana.Wq_ms.toFixed(2) + ' ms');
+  animateValue('mv-w',   ana.W_ms.toFixed(2)  + ' ms');
+  animateValue('mv-p0',  ana.P0_pct.toFixed(1) + '%');
+
+  // Colour the rho metric card
+  const rhoCard = document.getElementById('mc-rho');
+  const rhoVal  = document.getElementById('mv-rho');
+  if (rho < 0.7)       { rhoVal.style.color = GREEN; }
+  else if (rho < 0.85) { rhoVal.style.color = GOLD;  }
+  else                 { rhoVal.style.color = RED;   }
+  rhoCard.classList.add('highlight');
+
+  // Rho bar
+  document.getElementById('rho-text').textContent = (rho * 100).toFixed(1) + '%';
+  const fill = document.getElementById('rho-fill');
+  fill.style.width = (rho * 100) + '%';
+  fill.style.background = rho < 0.7 ? GREEN : rho < 0.85 ? GOLD : RED;
+
+  const status = document.getElementById('rho-status');
+  if (rho < 0.7) {
+    status.textContent = '✔ STABLE';
+    status.className = 'badge badge-green';
+  } else if (rho < 0.85) {
+    status.textContent = '~ MODERATE';
+    status.className = 'badge badge-gold';
+  } else {
+    status.textContent = '⚠ CRITICAL';
+    status.className = 'badge';
+    status.style.cssText = 'color:#ff4d6d;border-color:rgba(255,77,109,0.4);background:rgba(255,77,109,0.08);font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid;';
+  }
+
+  updateTopology(ana.lam, ana.bw_mbps, ana.k);
+}
+
+function showNS3Comparison(ana, ns3, comp) {
+  const section = document.getElementById('comparison-section');
+  section.style.display = 'block';
+
+  if (ns3.error) {
+    section.innerHTML = `<div class="ns3-header"><div class="ns3-title">⚡ NS3 Result</div></div>
+      <div style="padding:16px;" class="alert alert-error">${ns3.error}</div>`;
+    return;
+  }
+
+  const tbody = document.getElementById('comparison-body');
+  const verdict = document.getElementById('ns3-verdict');
+  verdict.textContent = comp.verdict || '—';
+  verdict.className = 'ns3-verdict verdict-' + (comp.verdict||'good').toLowerCase();
+
+  const rows = [
+    ['Avg Queuing Delay (Wq)',
+     ana.Wq_ms.toFixed(3) + ' ms',
+     ns3.avg_delay_ms.toFixed(3) + ' ms',
+     comp.wq_diff_pct],
+    ['Packet Loss Rate',
+     '0.00% (∞ buffer)',
+     ns3.loss_rate_pct.toFixed(2) + '%',
+     null],
+    ['Throughput',
+     (ana.lam * 1000 * 8 / 1000).toFixed(0) + ' kbps',
+     ns3.throughput_kbps.toFixed(0) + ' kbps',
+     null],
+    ['Packets Transmitted',
+     '≈' + (ana.lam * 10).toFixed(0),
+     ns3.tx_packets,
+     null],
+    ['Packets Received',
+     '≈' + (ana.lam * 10).toFixed(0),
+     ns3.rx_packets,
+     null],
+  ];
+
+  tbody.innerHTML = rows.map(([label, a, s, diff]) => {
+    let diffHtml = '—';
+    if (diff !== null && diff !== undefined) {
+      const cls = diff < 10 ? 'diff-good' : diff < 25 ? 'diff-medium' : 'diff-poor';
+      diffHtml = `<span class="${cls}">${diff.toFixed(1)}% off</span>`;
+    }
+    return `<tr>
+      <td>${label}</td>
+      <td>${a}</td>
+      <td>${s}</td>
+      <td>${diffHtml}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Charts
+// ─────────────────────────────────────────────────────────────────────────────
+function renderSweepCharts(sweep, currentRho) {
+  const labels = sweep.map(d => (d.rho * 100).toFixed(0) + '%');
+  const lqData = sweep.map(d => d.Lq);
+  const wqData = sweep.map(d => d.Wq_ms);
+
+  // Find current point index
+  const currIdx = sweep.findIndex(d => Math.abs(d.rho - currentRho) < 0.03);
+
+  const pointColors = sweep.map((d, i) =>
+    i === currIdx ? '#ffffff' :
+    d.rho < 0.7 ? GREEN : d.rho < 0.85 ? GOLD : RED
+  );
+
+  const pointSizes = sweep.map((d,i) => i === currIdx ? 7 : 0);
+
+  const baseConfig = {
+    type: 'line',
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 600 },
+      plugins: { legend: { display: false }, tooltip: {
+        backgroundColor: '#0a1628',
+        borderColor: 'rgba(0,212,200,0.3)',
+        borderWidth: 1,
+        titleColor: '#c8e6f0',
+        bodyColor: '#c8e6f0',
+      }},
+      scales: {
+        x: { grid: { color: DIM }, ticks: { maxTicksLimit: 8 } },
+        y: { grid: { color: DIM }, beginAtZero: true }
+      }
+    }
+  };
+
+  if (chartLq) chartLq.destroy();
+  chartLq = new Chart(document.getElementById('chart-lq'), {
+    ...baseConfig,
+    data: {
+      labels,
+      datasets: [{
+        label: 'Lq',
+        data: lqData,
+        borderColor: TEAL,
+        backgroundColor: 'rgba(0,212,200,0.08)',
+        fill: true,
+        tension: 0.4,
+        borderWidth: 2,
+        pointBackgroundColor: pointColors,
+        pointRadius: pointSizes,
+        pointHoverRadius: 5,
+      }]
+    }
+  });
+
+  if (chartWq) chartWq.destroy();
+  chartWq = new Chart(document.getElementById('chart-wq'), {
+    ...baseConfig,
+    data: {
+      labels,
+      datasets: [{
+        label: 'Wq (ms)',
+        data: wqData,
+        borderColor: GOLD,
+        backgroundColor: 'rgba(245,166,35,0.08)',
+        fill: true,
+        tension: 0.4,
+        borderWidth: 2,
+        pointBackgroundColor: pointColors,
+        pointRadius: pointSizes,
+        pointHoverRadius: 5,
+      }]
+    }
+  });
+}
+
+async function loadSweepChart(bw_mbps, k) {
+  try {
+    const r    = await fetch('/api/sweep', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({bw_mbps, k})
+    });
+    const data = await r.json();
+    renderSweepCharts(data.sweep, parseFloat(document.getElementById('f-lam').value) / (k * data.mu));
+  } catch(e) {}
+}
+
+function renderCompareChart() {
+  const labels = Object.values(scenarioData).map(s => s.label);
+  const wqs    = Object.values(scenarioData).map(s => s.analytical.Wq_ms || 0);
+  const colors = Object.values(scenarioData).map(s => {
+    const r = s.analytical.rho || 0;
+    return r < 0.7 ? GREEN : r < 0.85 ? GOLD : RED;
+  });
+
+  if (chartCompare) chartCompare.destroy();
+  chartCompare = new Chart(document.getElementById('chart-compare'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Wq (ms)',
+        data: wqs,
+        backgroundColor: colors.map(c => c + '33'),
+        borderColor: colors,
+        borderWidth: 2,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        backgroundColor: '#0a1628',
+        borderColor: 'rgba(0,212,200,0.3)',
+        borderWidth: 1,
+        callbacks: {
+          label: ctx => ` Wq = ${ctx.raw.toFixed(2)} ms`
+        }
+      }},
+      scales: {
+        x: { grid: { display: false } },
+        y: { grid: { color: DIM }, beginAtZero: true,
+             title: { display: true, text: 'Wq (ms)', color: '#4a7090' } }
+      }
+    }
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+function animateValue(id, value) {
+  const el = document.getElementById(id);
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(4px)';
+  setTimeout(() => {
+    el.textContent = value;
+    el.style.transition = 'all 0.3s ease';
+    el.style.opacity = '1';
+    el.style.transform = 'translateY(0)';
+  }, 80);
+}
+
+function showError(msg) {
+  const main = document.getElementById('main-panel');
+  const existing = document.getElementById('error-alert');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'error-alert';
+  div.className = 'alert alert-error';
+  div.style.cssText = 'position:fixed;top:90px;right:24px;z-index:999;max-width:400px;';
+  div.textContent = '⚠ ' + msg;
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 6000);
+}
+
+function updateTopology(lam, bw_mbps, k) {
+  document.getElementById('topo-lam').textContent    = lam + ' pkt/s';
+  document.getElementById('topo-bw').textContent     = bw_mbps + ' Mbps';
+  document.getElementById('topo-router').textContent = `M/M/${k} Queue`;
+}
+
+// Enter key triggers analyse
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' &&
+      ['f-lam','f-bw','f-k'].includes(document.activeElement.id)) {
+    runAnalytical();
+  }
+});
+
+boot();
+</script>
+</body>
+</html>
