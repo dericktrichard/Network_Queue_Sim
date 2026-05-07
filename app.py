@@ -1,10 +1,3 @@
-# app.py  —  Flask backend for Network Queue Simulator Web UI
-# Place this in ~/network-queue-sim/app.py
-#
-# Install:  pip install flask
-# Run:      python app.py
-# Open:     http://localhost:5000
-
 from flask import Flask, request, jsonify, send_from_directory
 import math
 import subprocess
