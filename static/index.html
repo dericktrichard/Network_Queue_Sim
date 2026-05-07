@@ -1,555 +1,555 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Network Queue Simulator</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<style>
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#000000;--surface:#000000;--surface2:#000000;--surface3:#000000;
-  --border:#14272e;--border2:#6ddf0f;
-  --text:#f0f0f0;--text2:#888;--text3:#555;
-  --teal:#2dd4bf;--amber:#f59e0b;--red:#ef4444;--green:#22c55e;
-  --mono:'JetBrains Mono',monospace;--sans:'Inter',system-ui,sans-serif;
-  --r:6px;--r2:10px;
-}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Network Queue Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#000000;--surface:#000000;--surface2:#000000;--surface3:#000000;
+    --border:#14272e;--border2:#6ddf0f;
+    --text:#f0f0f0;--text2:#888;--text3:#555;
+    --teal:#2dd4bf;--amber:#f59e0b;--red:#ef4444;--green:#22c55e;
+    --mono:'JetBrains Mono',monospace;--sans:'Inter',system-ui,sans-serif;
+    --r:6px;--r2:10px;
+  }
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;height:100vh;overflow:hidden;display:flex;flex-direction:column}
 
-header{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:48px;border-bottom:0.5px solid var(--border);flex-shrink:0;background:rgba(10,10,10,0.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.h-left{display:flex;align-items:center;gap:10px}
-.h-logo{width:26px;height:26px;border:0.5px solid var(--border2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px}
-.h-title{font-size:13px;font-weight:500;color:var(--text);letter-spacing:-0.2px}
-.h-sub{font-size:11px;color:var(--text3);margin-left:4px}
-.h-badges{display:flex;gap:6px}
-.hb{font-size:10px;padding:3px 8px;border-radius:4px;border:0.5px solid var(--border);color:var(--text3);background:var(--surface)}
+  header{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:48px;border-bottom:0.5px solid var(--border);flex-shrink:0;background:rgba(10,10,10,0.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .h-left{display:flex;align-items:center;gap:10px}
+  .h-logo{width:26px;height:26px;border:0.5px solid var(--border2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px}
+  .h-title{font-size:13px;font-weight:500;color:var(--text);letter-spacing:-0.2px}
+  .h-sub{font-size:11px;color:var(--text3);margin-left:4px}
+  .h-badges{display:flex;gap:6px}
+  .hb{font-size:10px;padding:3px 8px;border-radius:4px;border:0.5px solid var(--border);color:var(--text3);background:var(--surface)}
 
-.layout{display:grid;grid-template-columns:256px 1fr;flex:1;overflow:hidden;min-height:0}
+  .layout{display:grid;grid-template-columns:256px 1fr;flex:1;overflow:hidden;min-height:0}
 
-.sidebar{border-right:0.5px solid var(--border);display:flex;flex-direction:column;overflow:hidden;background:var(--surface)}
-.sb-section{padding:12px 14px;border-bottom:0.5px solid var(--border);flex-shrink:0}
-.sb-label{font-size:10px;font-weight:500;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-bottom:8px}
-.sc-item{padding:8px 10px;border-radius:var(--r);cursor:pointer;transition:background 0.15s;border:0.5px solid transparent;margin-bottom:4px;position:relative}
-.sc-item:hover{background:var(--surface2)}
-.sc-item.active{background:var(--surface3);border-color:var(--border2)}
-.sc-item.active::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:2px;background:var(--teal);border-radius:0 1px 1px 0}
-.sc-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px}
-.sc-meta{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
-.sc-tag{font-size:10px;padding:2px 6px;border-radius:3px;background:var(--surface3);color:var(--text3);border:0.5px solid var(--border)}
-.sc-rho{font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500}
+  .sidebar{border-right:0.5px solid var(--border);display:flex;flex-direction:column;overflow:hidden;background:var(--surface)}
+  .sb-section{padding:12px 14px;border-bottom:0.5px solid var(--border);flex-shrink:0}
+  .sb-label{font-size:10px;font-weight:500;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-bottom:8px}
+  .sc-item{padding:8px 10px;border-radius:var(--r);cursor:pointer;transition:background 0.15s;border:0.5px solid transparent;margin-bottom:4px;position:relative}
+  .sc-item:hover{background:var(--surface2)}
+  .sc-item.active{background:var(--surface3);border-color:var(--border2)}
+  .sc-item.active::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:2px;background:var(--teal);border-radius:0 1px 1px 0}
+  .sc-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px}
+  .sc-meta{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+  .sc-tag{font-size:10px;padding:2px 6px;border-radius:3px;background:var(--surface3);color:var(--text3);border:0.5px solid var(--border)}
+  .sc-rho{font-size:10px;padding:2px 6px;border-radius:3px;font-weight:500}
 
-.params{padding:12px 14px;flex:1;overflow-y:auto;min-height:0}
-.params::-webkit-scrollbar{width:3px}
-.params::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-.field{margin-bottom:10px}
-.field label{display:block;font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
-.field input,.field select{width:100%;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--r);padding:6px 10px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;transition:border-color 0.15s}
-.field input:focus,.field select:focus{border-color:var(--border2)}
-.field select option{background:var(--surface2)}
-.btn-run{width:100%;padding:8px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--surface3);color:var(--text);font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s;margin-top:4px}
-.btn-run:hover{background:var(--surface2);border-color:var(--text3)}
-.btn-ns3{width:100%;padding:8px;border:0.5px solid rgba(45,212,191,0.3);border-radius:var(--r);background:rgba(45,212,191,0.05);color:var(--teal);font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s;margin-top:6px}
-.btn-ns3:hover{background:rgba(45,212,191,0.1)}
-.btn-ns3:disabled{opacity:0.3;cursor:not-allowed}
+  .params{padding:12px 14px;flex:1;overflow-y:auto;min-height:0}
+  .params::-webkit-scrollbar{width:3px}
+  .params::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+  .field{margin-bottom:10px}
+  .field label{display:block;font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+  .field input,.field select{width:100%;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--r);padding:6px 10px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;transition:border-color 0.15s}
+  .field input:focus,.field select:focus{border-color:var(--border2)}
+  .field select option{background:var(--surface2)}
+  .btn-run{width:100%;padding:8px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--surface3);color:var(--text);font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s;margin-top:4px}
+  .btn-run:hover{background:var(--surface2);border-color:var(--text3)}
+  .btn-ns3{width:100%;padding:8px;border:0.5px solid rgba(45,212,191,0.3);border-radius:var(--r);background:rgba(45,212,191,0.05);color:var(--teal);font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s;margin-top:6px}
+  .btn-ns3:hover{background:rgba(45,212,191,0.1)}
+  .btn-ns3:disabled{opacity:0.3;cursor:not-allowed}
 
-.topo-strip{margin-top:16px;padding-top:12px;border-top:0.5px solid var(--border)}
-.topo-inner{background:rgba(255,255,255,0.02);backdrop-filter:blur(12px) saturate(1.2);-webkit-backdrop-filter:blur(12px) saturate(1.2);border:0.5px solid rgba(255,255,255,0.07);border-radius:var(--r);padding:10px;display:flex;align-items:center;gap:6px}
-.topo-node{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0}
-.topo-icon{width:36px;height:28px;border:0.5px solid var(--border2);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:14px;background:var(--surface2)}
-.topo-lbl{font-size:9px;color:var(--text3);text-align:center}
-.topo-lbl b{display:block;font-size:10px;color:var(--text2);font-weight:500}
-.topo-pipe{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
-.topo-line{width:100%;height:1px;background:var(--border2);position:relative;overflow:hidden}
-.topo-line::after{content:'';position:absolute;top:-1px;left:-30%;width:30%;height:3px;background:var(--teal);opacity:0.5;animation:flow 1.8s linear infinite}
-@keyframes flow{to{left:130%}}
-.topo-bw{font-size:9px;color:var(--text3);font-family:var(--mono)}
+  .topo-strip{margin-top:16px;padding-top:12px;border-top:0.5px solid var(--border)}
+  .topo-inner{background:rgba(255,255,255,0.02);backdrop-filter:blur(12px) saturate(1.2);-webkit-backdrop-filter:blur(12px) saturate(1.2);border:0.5px solid rgba(255,255,255,0.07);border-radius:var(--r);padding:10px;display:flex;align-items:center;gap:6px}
+  .topo-node{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0}
+  .topo-icon{width:36px;height:28px;border:0.5px solid var(--border2);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:14px;background:var(--surface2)}
+  .topo-lbl{font-size:9px;color:var(--text3);text-align:center}
+  .topo-lbl b{display:block;font-size:10px;color:var(--text2);font-weight:500}
+  .topo-pipe{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+  .topo-line{width:100%;height:1px;background:var(--border2);position:relative;overflow:hidden}
+  .topo-line::after{content:'';position:absolute;top:-1px;left:-30%;width:30%;height:3px;background:var(--teal);opacity:0.5;animation:flow 1.8s linear infinite}
+  @keyframes flow{to{left:130%}}
+  .topo-bw{font-size:9px;color:var(--text3);font-family:var(--mono)}
 
-.main{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
-.main-inner{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;min-height:0}
-.main-inner::-webkit-scrollbar{width:3px}
-.main-inner::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  .main{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+  .main-inner{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;min-height:0}
+  .main-inner::-webkit-scrollbar{width:3px}
+  .main-inner::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 
-.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--text3);text-align:center;padding:40px}
-.empty-icon{font-size:32px;opacity:0.15;margin-bottom:4px}
-.empty h3{font-size:14px;font-weight:500;color:var(--text3)}
-.empty p{font-size:11px;line-height:1.6;max-width:260px}
+  .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--text3);text-align:center;padding:40px}
+  .empty-icon{font-size:32px;opacity:0.15;margin-bottom:4px}
+  .empty h3{font-size:14px;font-weight:500;color:var(--text3)}
+  .empty p{font-size:11px;line-height:1.6;max-width:260px}
 
-.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-.mc{padding:10px 12px;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r2);transition:border-color 0.3s}
-.mc.lit{border-color:var(--border2)}
-.mc-label{font-size:10px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:5px}
-.mc-val{font-size:20px;font-weight:500;color:var(--text);font-family:var(--mono);line-height:1;margin-bottom:2px;transition:color 0.3s}
-.mc-unit{font-size:10px;color:var(--text3)}
+  .metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+  .mc{padding:10px 12px;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r2);transition:border-color 0.3s}
+  .mc.lit{border-color:var(--border2)}
+  .mc-label{font-size:10px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:5px}
+  .mc-val{font-size:20px;font-weight:500;color:var(--text);font-family:var(--mono);line-height:1;margin-bottom:2px;transition:color 0.3s}
+  .mc-unit{font-size:10px;color:var(--text3)}
 
-.rho-row{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r2);padding:10px 14px}
-.rho-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.rho-title{font-size:12px;font-weight:500;color:var(--text)}
-.rho-badge{font-size:10px;padding:3px 9px;border-radius:4px;border:0.5px solid}
-.rho-track{height:4px;background:var(--surface3);border-radius:2px;overflow:hidden}
-.rho-fill{height:100%;border-radius:2px;transition:width 0.6s cubic-bezier(.4,0,.2,1),background 0.3s}
-.rho-scale{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:5px}
+  .rho-row{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r2);padding:10px 14px}
+  .rho-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .rho-title{font-size:12px;font-weight:500;color:var(--text)}
+  .rho-badge{font-size:10px;padding:3px 9px;border-radius:4px;border:0.5px solid}
+  .rho-track{height:4px;background:var(--surface3);border-radius:2px;overflow:hidden}
+  .rho-fill{height:100%;border-radius:2px;transition:width 0.6s cubic-bezier(.4,0,.2,1),background 0.3s}
+  .rho-scale{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:5px}
 
-.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.chart-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r2);padding:12px}
-.chart-title{font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px}
-.chart-sub{font-size:10px;color:var(--text3);margin-bottom:10px}
-.chart-wrap{position:relative;height:150px}
-.chart-wrap.sm{height:110px}
+  .chart-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .chart-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r2);padding:12px}
+  .chart-title{font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px}
+  .chart-sub{font-size:10px;color:var(--text3);margin-bottom:10px}
+  .chart-wrap{position:relative;height:150px}
+  .chart-wrap.sm{height:110px}
 
-.cmp-table{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r2);overflow:hidden}
-.cmp-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:0.5px solid var(--border)}
-.cmp-title{font-size:12px;font-weight:500;color:var(--text)}
-.verdict{font-size:10px;padding:3px 9px;border-radius:4px;border:0.5px solid}
-table{width:100%;border-collapse:collapse}
-th{padding:6px 14px;font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text3);text-align:left;background:var(--surface2)}
-td{padding:7px 14px;border-top:0.5px solid var(--border);font-size:11px;font-family:var(--mono)}
-td:first-child{color:var(--text2);font-family:var(--sans)}
-td:nth-child(2){color:var(--text)}
-td:nth-child(3){color:var(--teal)}
-.diff-ok{color:var(--green)!important;font-weight:500}
-.diff-mid{color:var(--amber)!important;font-weight:500}
-.diff-bad{color:var(--red)!important;font-weight:500}
+  .cmp-table{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r2);overflow:hidden}
+  .cmp-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:0.5px solid var(--border)}
+  .cmp-title{font-size:12px;font-weight:500;color:var(--text)}
+  .verdict{font-size:10px;padding:3px 9px;border-radius:4px;border:0.5px solid}
+  table{width:100%;border-collapse:collapse}
+  th{padding:6px 14px;font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text3);text-align:left;background:var(--surface2)}
+  td{padding:7px 14px;border-top:0.5px solid var(--border);font-size:11px;font-family:var(--mono)}
+  td:first-child{color:var(--text2);font-family:var(--sans)}
+  td:nth-child(2){color:var(--text)}
+  td:nth-child(3){color:var(--teal)}
+  .diff-ok{color:var(--green)!important;font-weight:500}
+  .diff-mid{color:var(--amber)!important;font-weight:500}
+  .diff-bad{color:var(--red)!important;font-weight:500}
 
-.spin{display:inline-block;width:12px;height:12px;border:1.5px solid var(--border2);border-top-color:var(--teal);border-radius:50%;animation:rot .7s linear infinite;vertical-align:middle;margin-right:5px}
-@keyframes rot{to{transform:rotate(360deg)}}
+  .spin{display:inline-block;width:12px;height:12px;border:1.5px solid var(--border2);border-top-color:var(--teal);border-radius:50%;animation:rot .7s linear infinite;vertical-align:middle;margin-right:5px}
+  @keyframes rot{to{transform:rotate(360deg)}}
 
-#results{display:none}
-#cmp-section{display:none}
-</style>
-</head>
-<body>
+  #results{display:none}
+  #cmp-section{display:none}
+  </style>
+  </head>
+  <body>
 
-<header>
-  <div class="h-left">
-    <div class="h-logo">📡</div>
-    <span class="h-title">Network Queue Simulator</span>
-    <span class="h-sub">M/M/1 · M/M/K · NS3 Verification</span>
-  </div>
-  <div class="h-badges">
-    <span class="hb">M/M/1</span>
-    <span class="hb">M/M/K</span>
-    <span class="hb">P-K Formula</span>
-    <span class="hb">NS3 Verified</span>
-  </div>
-</header>
-
-<div class="layout">
-  <aside class="sidebar">
-    <div class="sb-section">
-      <div class="sb-label">Scenarios</div>
-      <div id="scenario-list"><div style="color:var(--text3);font-size:11px;padding:4px">Loading…</div></div>
+  <header>
+    <div class="h-left">
+      <div class="h-logo">📡</div>
+      <span class="h-title">Network Queue Simulator</span>
+      <span class="h-sub">M/M/1 · M/M/K · NS3 Verification</span>
     </div>
-
-    <div class="params">
-      <div class="sb-label">Parameters</div>
-      <div class="field">
-        <label>λ — Arrival rate (pkt/s)</label>
-        <input type="number" id="f-lam" value="100" min="1" max="10000">
-      </div>
-      <div class="field">
-        <label>Bandwidth (Mbps)</label>
-        <input type="number" id="f-bw" value="1.2" min="0.1" max="1000" step="0.1">
-      </div>
-      <div class="field">
-        <label>K — Parallel links</label>
-        <input type="number" id="f-k" value="1" min="1" max="20">
-      </div>
-      <div class="field">
-        <label>Simulation time</label>
-        <select id="f-simtime">
-          <option value="5">5 s — fast</option>
-          <option value="10" selected>10 s — default</option>
-          <option value="30">30 s — accurate</option>
-          <option value="60">60 s — high accuracy</option>
-        </select>
-      </div>
-      <button class="btn-run" onclick="runAnalytical()">▶ Analyse</button>
-      <button class="btn-ns3" id="btn-sim" onclick="runNS3()">⚡ Run NS3</button>
-
-      <div class="topo-strip">
-        <div class="sb-label">Topology</div>
-        <div class="topo-inner">
-          <div class="topo-node">
-            <div class="topo-icon">💻</div>
-            <div class="topo-lbl">Sender<b id="topo-lam">λ pkt/s</b></div>
-          </div>
-          <div class="topo-pipe">
-            <div class="topo-line"></div>
-            <span class="topo-bw">100 Mbps</span>
-          </div>
-          <div class="topo-node">
-            <div class="topo-icon">🔀</div>
-            <div class="topo-lbl">Router<b id="topo-router">M/M/K</b></div>
-          </div>
-          <div class="topo-pipe">
-            <div class="topo-line"></div>
-            <span class="topo-bw" id="topo-bw">? Mbps</span>
-          </div>
-          <div class="topo-node">
-            <div class="topo-icon">🖥</div>
-            <div class="topo-lbl">Receiver<b>Sink</b></div>
-          </div>
-        </div>
-      </div>
+    <div class="h-badges">
+      <span class="hb">M/M/1</span>
+      <span class="hb">M/M/K</span>
+      <span class="hb">P-K Formula</span>
+      <span class="hb">NS3 Verified</span>
     </div>
-  </aside>
+  </header>
 
-  <main class="main">
-    <div class="main-inner" id="main-inner">
-
-      <div class="empty" id="empty-state">
-        <div class="empty-icon">◈</div>
-        <h3>Select a scenario or set parameters</h3>
-        <p>Computes analytical queuing metrics and optionally verifies with NS3 discrete-event simulation.</p>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sb-section">
+        <div class="sb-label">Scenarios</div>
+        <div id="scenario-list"><div style="color:var(--text3);font-size:11px;padding:4px">Loading…</div></div>
       </div>
 
-      <div id="results">
-        <div class="metrics">
-          <div class="mc" id="mc-rho">
-            <div class="mc-label">ρ Utilisation</div>
-            <div class="mc-val" id="mv-rho">—</div>
-            <div class="mc-unit">fraction of capacity</div>
-          </div>
-          <div class="mc">
-            <div class="mc-label">Lq Buffer</div>
-            <div class="mc-val" id="mv-lq">—</div>
-            <div class="mc-unit">avg packets waiting</div>
-          </div>
-          <div class="mc">
-            <div class="mc-label">Wq Queue delay</div>
-            <div class="mc-val" id="mv-wq">—</div>
-            <div class="mc-unit">milliseconds avg wait</div>
-          </div>
-          <div class="mc">
-            <div class="mc-label">W Total delay</div>
-            <div class="mc-val" id="mv-w">—</div>
-            <div class="mc-unit">ms queue + tx</div>
-          </div>
-          <div class="mc">
-            <div class="mc-label">P₀ Idle time</div>
-            <div class="mc-val" id="mv-p0">—</div>
-            <div class="mc-unit">% router free</div>
+      <div class="params">
+        <div class="sb-label">Parameters</div>
+        <div class="field">
+          <label>λ — Arrival rate (pkt/s)</label>
+          <input type="number" id="f-lam" value="100" min="1" max="10000">
+        </div>
+        <div class="field">
+          <label>Bandwidth (Mbps)</label>
+          <input type="number" id="f-bw" value="1.2" min="0.1" max="1000" step="0.1">
+        </div>
+        <div class="field">
+          <label>K — Parallel links</label>
+          <input type="number" id="f-k" value="1" min="1" max="20">
+        </div>
+        <div class="field">
+          <label>Simulation time</label>
+          <select id="f-simtime">
+            <option value="5">5 s — fast</option>
+            <option value="10" selected>10 s — default</option>
+            <option value="30">30 s — accurate</option>
+            <option value="60">60 s — high accuracy</option>
+          </select>
+        </div>
+        <button class="btn-run" onclick="runAnalytical()">▶ Analyse</button>
+        <button class="btn-ns3" id="btn-sim" onclick="runNS3()">⚡ Run NS3</button>
+
+        <div class="topo-strip">
+          <div class="sb-label">Topology</div>
+          <div class="topo-inner">
+            <div class="topo-node">
+              <div class="topo-icon">💻</div>
+              <div class="topo-lbl">Sender<b id="topo-lam">λ pkt/s</b></div>
+            </div>
+            <div class="topo-pipe">
+              <div class="topo-line"></div>
+              <span class="topo-bw">100 Mbps</span>
+            </div>
+            <div class="topo-node">
+              <div class="topo-icon">🔀</div>
+              <div class="topo-lbl">Router<b id="topo-router">M/M/K</b></div>
+            </div>
+            <div class="topo-pipe">
+              <div class="topo-line"></div>
+              <span class="topo-bw" id="topo-bw">? Mbps</span>
+            </div>
+            <div class="topo-node">
+              <div class="topo-icon">🖥</div>
+              <div class="topo-lbl">Receiver<b>Sink</b></div>
+            </div>
           </div>
         </div>
+      </div>
+    </aside>
 
-        <div class="rho-row">
-          <div class="rho-top">
-            <span class="rho-title">Link utilisation  ρ = <span id="rho-val">—</span></span>
-            <span class="rho-badge" id="rho-badge">—</span>
-          </div>
-          <div class="rho-track"><div class="rho-fill" id="rho-fill" style="width:0%;background:var(--green)"></div></div>
-          <div class="rho-scale">
-            <span>0% idle</span><span>70% warn</span><span>85% critical</span><span>100% collapse</span>
-          </div>
+    <main class="main">
+      <div class="main-inner" id="main-inner">
+
+        <div class="empty" id="empty-state">
+          <div class="empty-icon">◈</div>
+          <h3>Select a scenario or set parameters</h3>
+          <p>Computes analytical queuing metrics and optionally verifies with NS3 discrete-event simulation.</p>
         </div>
 
-        <div class="chart-row">
+        <div id="results">
+          <div class="metrics">
+            <div class="mc" id="mc-rho">
+              <div class="mc-label">ρ Utilisation</div>
+              <div class="mc-val" id="mv-rho">—</div>
+              <div class="mc-unit">fraction of capacity</div>
+            </div>
+            <div class="mc">
+              <div class="mc-label">Lq Buffer</div>
+              <div class="mc-val" id="mv-lq">—</div>
+              <div class="mc-unit">avg packets waiting</div>
+            </div>
+            <div class="mc">
+              <div class="mc-label">Wq Queue delay</div>
+              <div class="mc-val" id="mv-wq">—</div>
+              <div class="mc-unit">milliseconds avg wait</div>
+            </div>
+            <div class="mc">
+              <div class="mc-label">W Total delay</div>
+              <div class="mc-val" id="mv-w">—</div>
+              <div class="mc-unit">ms queue + tx</div>
+            </div>
+            <div class="mc">
+              <div class="mc-label">P₀ Idle time</div>
+              <div class="mc-val" id="mv-p0">—</div>
+              <div class="mc-unit">% router free</div>
+            </div>
+          </div>
+
+          <div class="rho-row">
+            <div class="rho-top">
+              <span class="rho-title">Link utilisation  ρ = <span id="rho-val">—</span></span>
+              <span class="rho-badge" id="rho-badge">—</span>
+            </div>
+            <div class="rho-track"><div class="rho-fill" id="rho-fill" style="width:0%;background:var(--green)"></div></div>
+            <div class="rho-scale">
+              <span>0% idle</span><span>70% warn</span><span>85% critical</span><span>100% collapse</span>
+            </div>
+          </div>
+
+          <div class="chart-row">
+            <div class="chart-card">
+              <div class="chart-title">Queue length vs utilisation</div>
+              <div class="chart-sub">Lq — M/M/K, varying λ at fixed bandwidth</div>
+              <div class="chart-wrap"><canvas id="chart-lq"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title">Queuing delay vs utilisation</div>
+              <div class="chart-sub">Wq in milliseconds — non-linear near capacity</div>
+              <div class="chart-wrap"><canvas id="chart-wq"></canvas></div>
+            </div>
+          </div>
+
           <div class="chart-card">
-            <div class="chart-title">Queue length vs utilisation</div>
-            <div class="chart-sub">Lq — M/M/K, varying λ at fixed bandwidth</div>
-            <div class="chart-wrap"><canvas id="chart-lq"></canvas></div>
+            <div class="chart-title">Scenario comparison — queuing delay Wq</div>
+            <div class="chart-sub">All preset scenarios, analytical results</div>
+            <div class="chart-wrap sm"><canvas id="chart-compare"></canvas></div>
           </div>
-          <div class="chart-card">
-            <div class="chart-title">Queuing delay vs utilisation</div>
-            <div class="chart-sub">Wq in milliseconds — non-linear near capacity</div>
-            <div class="chart-wrap"><canvas id="chart-wq"></canvas></div>
+
+          <div class="cmp-table" id="cmp-section">
+            <div class="cmp-hdr">
+              <span class="cmp-title">NS3 simulation vs analytical</span>
+              <span class="verdict" id="ns3-verdict">—</span>
+            </div>
+            <table>
+              <thead>
+                <tr><th>Metric</th><th>Analytical</th><th>NS3</th><th>Accuracy</th></tr>
+              </thead>
+              <tbody id="cmp-body"></tbody>
+            </table>
           </div>
         </div>
 
-        <div class="chart-card">
-          <div class="chart-title">Scenario comparison — queuing delay Wq</div>
-          <div class="chart-sub">All preset scenarios, analytical results</div>
-          <div class="chart-wrap sm"><canvas id="chart-compare"></canvas></div>
-        </div>
-
-        <div class="cmp-table" id="cmp-section">
-          <div class="cmp-hdr">
-            <span class="cmp-title">NS3 simulation vs analytical</span>
-            <span class="verdict" id="ns3-verdict">—</span>
-          </div>
-          <table>
-            <thead>
-              <tr><th>Metric</th><th>Analytical</th><th>NS3</th><th>Accuracy</th></tr>
-            </thead>
-            <tbody id="cmp-body"></tbody>
-          </table>
-        </div>
       </div>
+    </main>
+  </div>
 
-    </div>
-  </main>
-</div>
+  <script>
+  Chart.defaults.color='#555';
+  Chart.defaults.borderColor='rgba(255,255,255,0.06)';
+  Chart.defaults.font.family="'JetBrains Mono',monospace";
+  Chart.defaults.font.size=10;
 
-<script>
-Chart.defaults.color='#555';
-Chart.defaults.borderColor='rgba(255,255,255,0.06)';
-Chart.defaults.font.family="'JetBrains Mono',monospace";
-Chart.defaults.font.size=10;
+  const TEAL='#2dd4bf',AMBER='#f59e0b',RED='#ef4444',GREEN='#22c55e';
+  let cLq=null,cWq=null,cCmp=null,scenarioData={};
 
-const TEAL='#2dd4bf',AMBER='#f59e0b',RED='#ef4444',GREEN='#22c55e';
-let cLq=null,cWq=null,cCmp=null,scenarioData={};
-
-async function boot(){
-  try{
-    const r=await fetch('/api/scenarios');
-    scenarioData=await r.json();
-    renderScenarios();
-    renderCompare();
-  }catch(e){
-    document.getElementById('scenario-list').innerHTML=
-      '<div style="color:#ef4444;font-size:11px;padding:4px">Cannot reach server — is Flask running?</div>';
-  }
-}
-
-function renderScenarios(){
-  const el=document.getElementById('scenario-list');
-  el.innerHTML='';
-  for(const[k,s]of Object.entries(scenarioData)){
-    const rho=s.analytical.rho||0;
-    const rc=rho<0.7?GREEN:rho<0.85?AMBER:RED;
-    const d=document.createElement('div');
-    d.className='sc-item';d.dataset.key=k;
-    d.innerHTML=`<div class="sc-name">${s.label}</div>
-      <div class="sc-meta">
-        <span class="sc-tag">λ=${s.lam}</span>
-        <span class="sc-tag">${s.bw_mbps}Mbps</span>
-        <span class="sc-tag">K=${s.k}</span>
-        <span class="sc-rho" style="background:${rc}18;color:${rc};border:0.5px solid ${rc}44">ρ=${(rho*100).toFixed(1)}%</span>
-      </div>`;
-    d.onclick=()=>loadScenario(k,d);
-    el.appendChild(d);
-  }
-}
-
-function loadScenario(k,el){
-  document.querySelectorAll('.sc-item').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
-  const s=scenarioData[k];
-  document.getElementById('f-lam').value=s.lam;
-  document.getElementById('f-bw').value=s.bw_mbps;
-  document.getElementById('f-k').value=s.k;
-  displayResults(s.analytical,null);
-  loadSweep(s.bw_mbps,s.k);
-}
-
-async function runAnalytical(){
-  const lam=+document.getElementById('f-lam').value;
-  const bw=+document.getElementById('f-bw').value;
-  const k=+document.getElementById('f-k').value;
-  document.querySelectorAll('.sc-item').forEach(c=>c.classList.remove('active'));
-  try{
-    const r=await fetch('/api/analyse',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({lam,bw_mbps:bw,k})
-    });
-    const d=await r.json();
-    displayResults(d.analytical,null);
-    if(d.sweep)renderSweep(d.sweep,d.analytical.rho);
-    updateTopo(lam,bw,k);
-  }catch(e){showErr(e.message)}
-}
-
-async function runNS3(){
-  const lam=+document.getElementById('f-lam').value;
-  const bw=+document.getElementById('f-bw').value;
-  const k=+document.getElementById('f-k').value;
-  const st=+document.getElementById('f-simtime').value;
-  const btn=document.getElementById('btn-sim');
-  btn.disabled=true;
-  btn.innerHTML='<span class="spin"></span> Running NS3…';
-  try{
-    const r=await fetch('/api/simulate',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({lam,bw_mbps:bw,k,sim_time:st})
-    });
-    const d=await r.json();
-    displayResults(d.analytical,d.ns3);
-    if(d.comparison)showCmp(d.analytical,d.ns3,d.comparison);
-  }catch(e){showErr(e.message)}
-  finally{
-    btn.disabled=false;
-    btn.innerHTML='⚡ Run NS3';
-  }
-}
-
-function displayResults(ana,ns3){
-  document.getElementById('empty-state').style.display='none';
-  const res=document.getElementById('results');
-  res.style.display='flex';
-  res.style.flexDirection='column';
-  res.style.gap='10px';
-  if(ana.error){showErr(ana.error);return}
-  const rho=ana.rho;
-  const rc=rho<0.7?GREEN:rho<0.85?AMBER:RED;
-  setVal('mv-rho',(rho*100).toFixed(1)+'%',rc);
-  setVal('mv-lq',ana.Lq.toFixed(2));
-  setVal('mv-wq',ana.Wq_ms.toFixed(2)+' ms');
-  setVal('mv-w',ana.W_ms.toFixed(2)+' ms');
-  setVal('mv-p0',ana.P0_pct.toFixed(1)+'%');
-  document.getElementById('mc-rho').classList.add('lit');
-  document.getElementById('rho-val').textContent=(rho*100).toFixed(1)+'%';
-  const fill=document.getElementById('rho-fill');
-  fill.style.width=(rho*100)+'%';
-  fill.style.background=rc;
-  const badge=document.getElementById('rho-badge');
-  if(rho<0.7){
-    badge.textContent='Stable';
-    badge.style.cssText=`color:${GREEN};border-color:${GREEN}44;background:${GREEN}12`;
-  }else if(rho<0.85){
-    badge.textContent='Moderate';
-    badge.style.cssText=`color:${AMBER};border-color:${AMBER}44;background:${AMBER}12`;
-  }else{
-    badge.textContent='Critical';
-    badge.style.cssText=`color:${RED};border-color:${RED}44;background:${RED}12`;
-  }
-  updateTopo(ana.lam,ana.bw_mbps,ana.k);
-}
-
-function showCmp(ana,ns3,cmp){
-  const s=document.getElementById('cmp-section');
-  s.style.display='block';
-  if(ns3.error){
-    s.innerHTML=`<div class="cmp-hdr"><span class="cmp-title">NS3 Result</span></div>
-      <div style="padding:12px;color:#ef4444;font-size:11px">${ns3.error}</div>`;
-    return;
-  }
-  const vd=document.getElementById('ns3-verdict');
-  const v=cmp.verdict||'Good';
-  vd.textContent=v;
-  vd.style.cssText=v==='Excellent'
-    ?`color:${GREEN};border-color:${GREEN}44;background:${GREEN}12`
-    :`color:${AMBER};border-color:${AMBER}44;background:${AMBER}12`;
-  const rows=[
-    ['Avg queuing delay (Wq)', ana.Wq_ms.toFixed(3)+' ms', ns3.avg_delay_ms.toFixed(3)+' ms', cmp.wq_diff_pct],
-    ['Packet loss rate',       '0.00%',                     ns3.loss_rate_pct.toFixed(2)+'%',  null],
-    ['Throughput',             (ana.lam*1000*8/1000).toFixed(0)+' kbps', ns3.throughput_kbps.toFixed(0)+' kbps', null],
-    ['Packets tx',             '≈'+(ana.lam*10).toFixed(0), ns3.tx_packets, null],
-    ['Packets rx',             '≈'+(ana.lam*10).toFixed(0), ns3.rx_packets, null],
-  ];
-  document.getElementById('cmp-body').innerHTML=rows.map(([l,a,n,d])=>{
-    let dc='—';
-    if(d!=null){
-      const cls=d<10?'diff-ok':d<25?'diff-mid':'diff-bad';
-      dc=`<span class="${cls}">${d.toFixed(1)}% off</span>`;
+  async function boot(){
+    try{
+      const r=await fetch('/api/scenarios');
+      scenarioData=await r.json();
+      renderScenarios();
+      renderCompare();
+    }catch(e){
+      document.getElementById('scenario-list').innerHTML=
+        '<div style="color:#ef4444;font-size:11px;padding:4px">Cannot reach server — is Flask running?</div>';
     }
-    return`<tr><td>${l}</td><td>${a}</td><td>${n}</td><td>${dc}</td></tr>`;
-  }).join('');
-}
+  }
 
-function renderSweep(sweep,curRho){
-  const labels=sweep.map(d=>(d.rho*100).toFixed(0)+'%');
-  const lqD=sweep.map(d=>d.Lq);
-  const wqD=sweep.map(d=>d.Wq_ms);
-  const ci=sweep.findIndex(d=>Math.abs(d.rho-curRho)<0.03);
-  const ptC=sweep.map((d,i)=>i===ci?'#fff':d.rho<0.7?GREEN:d.rho<0.85?AMBER:RED);
-  const ptS=sweep.map((_,i)=>i===ci?5:0);
-  const base={
-    responsive:true,maintainAspectRatio:false,animation:{duration:500},
-    plugins:{legend:{display:false},tooltip:{
-      backgroundColor:'#111',borderColor:'#262626',borderWidth:1,
-      titleColor:'#ccc',bodyColor:'#888'
-    }},
-    scales:{
-      x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{maxTicksLimit:6}},
-      y:{grid:{color:'rgba(255,255,255,0.04)'},beginAtZero:true}
+  function renderScenarios(){
+    const el=document.getElementById('scenario-list');
+    el.innerHTML='';
+    for(const[k,s]of Object.entries(scenarioData)){
+      const rho=s.analytical.rho||0;
+      const rc=rho<0.7?GREEN:rho<0.85?AMBER:RED;
+      const d=document.createElement('div');
+      d.className='sc-item';d.dataset.key=k;
+      d.innerHTML=`<div class="sc-name">${s.label}</div>
+        <div class="sc-meta">
+          <span class="sc-tag">λ=${s.lam}</span>
+          <span class="sc-tag">${s.bw_mbps}Mbps</span>
+          <span class="sc-tag">K=${s.k}</span>
+          <span class="sc-rho" style="background:${rc}18;color:${rc};border:0.5px solid ${rc}44">ρ=${(rho*100).toFixed(1)}%</span>
+        </div>`;
+      d.onclick=()=>loadScenario(k,d);
+      el.appendChild(d);
     }
-  };
-  if(cLq)cLq.destroy();
-  cLq=new Chart(document.getElementById('chart-lq'),{
-    ...base,type:'line',
-    data:{labels,datasets:[{
-      label:'Lq',data:lqD,
-      borderColor:TEAL,backgroundColor:'rgba(45,212,191,0.05)',
-      fill:true,tension:0.4,borderWidth:1.5,
-      pointBackgroundColor:ptC,pointRadius:ptS,pointHoverRadius:4
-    }]}
-  });
-  if(cWq)cWq.destroy();
-  cWq=new Chart(document.getElementById('chart-wq'),{
-    ...base,type:'line',
-    data:{labels,datasets:[{
-      label:'Wq',data:wqD,
-      borderColor:AMBER,backgroundColor:'rgba(245,158,11,0.05)',
-      fill:true,tension:0.4,borderWidth:1.5,
-      pointBackgroundColor:ptC,pointRadius:ptS,pointHoverRadius:4
-    }]}
-  });
-}
+  }
 
-async function loadSweep(bw,k){
-  try{
-    const r=await fetch('/api/sweep',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({bw_mbps:bw,k})
-    });
-    const d=await r.json();
-    const mu=d.mu;
+  function loadScenario(k,el){
+    document.querySelectorAll('.sc-item').forEach(c=>c.classList.remove('active'));
+    el.classList.add('active');
+    const s=scenarioData[k];
+    document.getElementById('f-lam').value=s.lam;
+    document.getElementById('f-bw').value=s.bw_mbps;
+    document.getElementById('f-k').value=s.k;
+    displayResults(s.analytical,null);
+    loadSweep(s.bw_mbps,s.k);
+  }
+
+  async function runAnalytical(){
     const lam=+document.getElementById('f-lam').value;
-    renderSweep(d.sweep,lam/(k*mu));
-  }catch(e){}
-}
+    const bw=+document.getElementById('f-bw').value;
+    const k=+document.getElementById('f-k').value;
+    document.querySelectorAll('.sc-item').forEach(c=>c.classList.remove('active'));
+    try{
+      const r=await fetch('/api/analyse',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({lam,bw_mbps:bw,k})
+      });
+      const d=await r.json();
+      displayResults(d.analytical,null);
+      if(d.sweep)renderSweep(d.sweep,d.analytical.rho);
+      updateTopo(lam,bw,k);
+    }catch(e){showErr(e.message)}
+  }
 
-function renderCompare(){
-  const labels=Object.values(scenarioData).map(s=>s.label);
-  const wqs=Object.values(scenarioData).map(s=>s.analytical.Wq_ms||0);
-  const colors=Object.values(scenarioData).map(s=>{
-    const r=s.analytical.rho||0;
-    return r<0.7?GREEN:r<0.85?AMBER:RED;
-  });
-  if(cCmp)cCmp.destroy();
-  cCmp=new Chart(document.getElementById('chart-compare'),{
-    type:'bar',
-    data:{labels,datasets:[{
-      label:'Wq (ms)',data:wqs,
-      backgroundColor:colors.map(c=>c+'22'),
-      borderColor:colors,borderWidth:1.5,borderRadius:3
-    }]},
-    options:{
-      responsive:true,maintainAspectRatio:false,animation:{duration:400},
+  async function runNS3(){
+    const lam=+document.getElementById('f-lam').value;
+    const bw=+document.getElementById('f-bw').value;
+    const k=+document.getElementById('f-k').value;
+    const st=+document.getElementById('f-simtime').value;
+    const btn=document.getElementById('btn-sim');
+    btn.disabled=true;
+    btn.innerHTML='<span class="spin"></span> Running NS3…';
+    try{
+      const r=await fetch('/api/simulate',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({lam,bw_mbps:bw,k,sim_time:st})
+      });
+      const d=await r.json();
+      displayResults(d.analytical,d.ns3);
+      if(d.comparison)showCmp(d.analytical,d.ns3,d.comparison);
+    }catch(e){showErr(e.message)}
+    finally{
+      btn.disabled=false;
+      btn.innerHTML='⚡ Run NS3';
+    }
+  }
+
+  function displayResults(ana,ns3){
+    document.getElementById('empty-state').style.display='none';
+    const res=document.getElementById('results');
+    res.style.display='flex';
+    res.style.flexDirection='column';
+    res.style.gap='10px';
+    if(ana.error){showErr(ana.error);return}
+    const rho=ana.rho;
+    const rc=rho<0.7?GREEN:rho<0.85?AMBER:RED;
+    setVal('mv-rho',(rho*100).toFixed(1)+'%',rc);
+    setVal('mv-lq',ana.Lq.toFixed(2));
+    setVal('mv-wq',ana.Wq_ms.toFixed(2)+' ms');
+    setVal('mv-w',ana.W_ms.toFixed(2)+' ms');
+    setVal('mv-p0',ana.P0_pct.toFixed(1)+'%');
+    document.getElementById('mc-rho').classList.add('lit');
+    document.getElementById('rho-val').textContent=(rho*100).toFixed(1)+'%';
+    const fill=document.getElementById('rho-fill');
+    fill.style.width=(rho*100)+'%';
+    fill.style.background=rc;
+    const badge=document.getElementById('rho-badge');
+    if(rho<0.7){
+      badge.textContent='Stable';
+      badge.style.cssText=`color:${GREEN};border-color:${GREEN}44;background:${GREEN}12`;
+    }else if(rho<0.85){
+      badge.textContent='Moderate';
+      badge.style.cssText=`color:${AMBER};border-color:${AMBER}44;background:${AMBER}12`;
+    }else{
+      badge.textContent='Critical';
+      badge.style.cssText=`color:${RED};border-color:${RED}44;background:${RED}12`;
+    }
+    updateTopo(ana.lam,ana.bw_mbps,ana.k);
+  }
+
+  function showCmp(ana,ns3,cmp){
+    const s=document.getElementById('cmp-section');
+    s.style.display='block';
+    if(ns3.error){
+      s.innerHTML=`<div class="cmp-hdr"><span class="cmp-title">NS3 Result</span></div>
+        <div style="padding:12px;color:#ef4444;font-size:11px">${ns3.error}</div>`;
+      return;
+    }
+    const vd=document.getElementById('ns3-verdict');
+    const v=cmp.verdict||'Good';
+    vd.textContent=v;
+    vd.style.cssText=v==='Excellent'
+      ?`color:${GREEN};border-color:${GREEN}44;background:${GREEN}12`
+      :`color:${AMBER};border-color:${AMBER}44;background:${AMBER}12`;
+    const rows=[
+      ['Avg queuing delay (Wq)', ana.Wq_ms.toFixed(3)+' ms', ns3.avg_delay_ms.toFixed(3)+' ms', cmp.wq_diff_pct],
+      ['Packet loss rate',       '0.00%',                     ns3.loss_rate_pct.toFixed(2)+'%',  null],
+      ['Throughput',             (ana.lam*1000*8/1000).toFixed(0)+' kbps', ns3.throughput_kbps.toFixed(0)+' kbps', null],
+      ['Packets tx',             '≈'+(ana.lam*10).toFixed(0), ns3.tx_packets, null],
+      ['Packets rx',             '≈'+(ana.lam*10).toFixed(0), ns3.rx_packets, null],
+    ];
+    document.getElementById('cmp-body').innerHTML=rows.map(([l,a,n,d])=>{
+      let dc='—';
+      if(d!=null){
+        const cls=d<10?'diff-ok':d<25?'diff-mid':'diff-bad';
+        dc=`<span class="${cls}">${d.toFixed(1)}% off</span>`;
+      }
+      return`<tr><td>${l}</td><td>${a}</td><td>${n}</td><td>${dc}</td></tr>`;
+    }).join('');
+  }
+
+  function renderSweep(sweep,curRho){
+    const labels=sweep.map(d=>(d.rho*100).toFixed(0)+'%');
+    const lqD=sweep.map(d=>d.Lq);
+    const wqD=sweep.map(d=>d.Wq_ms);
+    const ci=sweep.findIndex(d=>Math.abs(d.rho-curRho)<0.03);
+    const ptC=sweep.map((d,i)=>i===ci?'#fff':d.rho<0.7?GREEN:d.rho<0.85?AMBER:RED);
+    const ptS=sweep.map((_,i)=>i===ci?5:0);
+    const base={
+      responsive:true,maintainAspectRatio:false,animation:{duration:500},
       plugins:{legend:{display:false},tooltip:{
         backgroundColor:'#111',borderColor:'#262626',borderWidth:1,
-        callbacks:{label:c=>` Wq = ${c.raw.toFixed(2)} ms`}
+        titleColor:'#ccc',bodyColor:'#888'
       }},
       scales:{
-        x:{grid:{display:false},ticks:{font:{size:9}}},
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{maxTicksLimit:6}},
         y:{grid:{color:'rgba(255,255,255,0.04)'},beginAtZero:true}
       }
-    }
+    };
+    if(cLq)cLq.destroy();
+    cLq=new Chart(document.getElementById('chart-lq'),{
+      ...base,type:'line',
+      data:{labels,datasets:[{
+        label:'Lq',data:lqD,
+        borderColor:TEAL,backgroundColor:'rgba(45,212,191,0.05)',
+        fill:true,tension:0.4,borderWidth:1.5,
+        pointBackgroundColor:ptC,pointRadius:ptS,pointHoverRadius:4
+      }]}
+    });
+    if(cWq)cWq.destroy();
+    cWq=new Chart(document.getElementById('chart-wq'),{
+      ...base,type:'line',
+      data:{labels,datasets:[{
+        label:'Wq',data:wqD,
+        borderColor:AMBER,backgroundColor:'rgba(245,158,11,0.05)',
+        fill:true,tension:0.4,borderWidth:1.5,
+        pointBackgroundColor:ptC,pointRadius:ptS,pointHoverRadius:4
+      }]}
+    });
+  }
+
+  async function loadSweep(bw,k){
+    try{
+      const r=await fetch('/api/sweep',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({bw_mbps:bw,k})
+      });
+      const d=await r.json();
+      const mu=d.mu;
+      const lam=+document.getElementById('f-lam').value;
+      renderSweep(d.sweep,lam/(k*mu));
+    }catch(e){}
+  }
+
+  function renderCompare(){
+    const labels=Object.values(scenarioData).map(s=>s.label);
+    const wqs=Object.values(scenarioData).map(s=>s.analytical.Wq_ms||0);
+    const colors=Object.values(scenarioData).map(s=>{
+      const r=s.analytical.rho||0;
+      return r<0.7?GREEN:r<0.85?AMBER:RED;
+    });
+    if(cCmp)cCmp.destroy();
+    cCmp=new Chart(document.getElementById('chart-compare'),{
+      type:'bar',
+      data:{labels,datasets:[{
+        label:'Wq (ms)',data:wqs,
+        backgroundColor:colors.map(c=>c+'22'),
+        borderColor:colors,borderWidth:1.5,borderRadius:3
+      }]},
+      options:{
+        responsive:true,maintainAspectRatio:false,animation:{duration:400},
+        plugins:{legend:{display:false},tooltip:{
+          backgroundColor:'#111',borderColor:'#262626',borderWidth:1,
+          callbacks:{label:c=>` Wq = ${c.raw.toFixed(2)} ms`}
+        }},
+        scales:{
+          x:{grid:{display:false},ticks:{font:{size:9}}},
+          y:{grid:{color:'rgba(255,255,255,0.04)'},beginAtZero:true}
+        }
+      }
+    });
+  }
+
+  function setVal(id,v,col){
+    const el=document.getElementById(id);
+    el.textContent=v;
+    if(col)el.style.color=col;
+  }
+
+  function updateTopo(lam,bw,k){
+    document.getElementById('topo-lam').textContent=lam+' pkt/s';
+    document.getElementById('topo-bw').textContent=bw+' Mbps';
+    document.getElementById('topo-router').textContent=`M/M/${k}`;
+  }
+
+  function showErr(msg){
+    const d=document.createElement('div');
+    d.style.cssText='position:fixed;top:54px;right:16px;z-index:99;padding:10px 14px;background:#1a0a0a;border:0.5px solid rgba(239,68,68,0.4);border-radius:6px;color:#ef4444;font-size:11px;max-width:300px';
+    d.textContent='⚠ '+msg;
+    document.body.appendChild(d);
+    setTimeout(()=>d.remove(),5000);
+  }
+
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&['f-lam','f-bw','f-k'].includes(document.activeElement.id))
+      runAnalytical();
   });
-}
 
-function setVal(id,v,col){
-  const el=document.getElementById(id);
-  el.textContent=v;
-  if(col)el.style.color=col;
-}
-
-function updateTopo(lam,bw,k){
-  document.getElementById('topo-lam').textContent=lam+' pkt/s';
-  document.getElementById('topo-bw').textContent=bw+' Mbps';
-  document.getElementById('topo-router').textContent=`M/M/${k}`;
-}
-
-function showErr(msg){
-  const d=document.createElement('div');
-  d.style.cssText='position:fixed;top:54px;right:16px;z-index:99;padding:10px 14px;background:#1a0a0a;border:0.5px solid rgba(239,68,68,0.4);border-radius:6px;color:#ef4444;font-size:11px;max-width:300px';
-  d.textContent='⚠ '+msg;
-  document.body.appendChild(d);
-  setTimeout(()=>d.remove(),5000);
-}
-
-document.addEventListener('keydown',e=>{
-  if(e.key==='Enter'&&['f-lam','f-bw','f-k'].includes(document.activeElement.id))
-    runAnalytical();
-});
-
-boot();
-</script>
-</body>
+  boot();
+  </script>
+  </body>
 </html>
